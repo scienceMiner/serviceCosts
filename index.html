@@ -23,9 +23,6 @@
     .app { max-width:760px; margin:0 auto; }
     header { display:flex; align-items:center; justify-content:space-between; padding:12px 2px 18px; }
     h1 { margin:0; font-size:32px; letter-spacing:-.8px; }
-    .header-actions { display:flex; align-items:center; gap:8px; }
-    .settings-button { width:44px;height:44px;border:0;border-radius:50%;background:#e5e5ea;color:#333;
-      font-size:25px;line-height:42px; }
     .add { width:44px;height:44px;border:0;border-radius:50%;background:var(--blue);color:#fff;
       font-size:30px;line-height:42px;box-shadow:0 3px 9px #007aff30; }
     .card { background:var(--card); border-radius:16px; overflow:hidden; box-shadow:0 1px 2px #00000008; }
@@ -64,28 +61,6 @@
     .delete { background:#fff0ef; color:var(--danger); }
     .error { min-height:18px; margin-top:8px; color:#b00020; font-size:13px; }
     .note { margin-top:14px; padding:12px 14px; border-radius:12px; background:#f2f2f7; color:var(--muted); font-size:12px; line-height:1.45; }
-
-    .settings-page { min-height:70vh; }
-    .settings-nav { display:flex; align-items:center; gap:10px; padding:2px 0 18px; }
-    .back-button { border:0; background:transparent; color:var(--blue); font-size:17px; padding:8px 4px; }
-    .settings-title { font-size:32px; font-weight:700; letter-spacing:-.7px; margin:0; }
-    .settings-section { margin:0 0 22px; }
-    .settings-section-title { margin:0 0 7px 13px; color:var(--muted); font-size:13px; text-transform:uppercase; letter-spacing:.35px; font-weight:650; }
-    .settings-card { background:#fff; border-radius:15px; overflow:hidden; }
-    .setting-row { min-height:57px; padding:10px 14px; display:flex; align-items:center; justify-content:space-between; gap:15px; border-bottom:1px solid var(--line); }
-    .setting-row:last-child { border-bottom:0; }
-    .setting-main { min-width:0; }
-    .setting-name { font-size:16px; font-weight:550; }
-    .setting-detail { margin-top:3px; color:var(--muted); font-size:12px; line-height:1.35; }
-    .setting-action { flex:0 0 auto; border:0; border-radius:10px; min-height:38px; padding:0 13px; background:#e5e5ea; color:var(--blue); font-weight:600; }
-    .setting-action.danger { color:var(--danger); }
-    .switch { position:relative; width:51px; height:31px; flex:0 0 51px; }
-    .switch input { opacity:0; width:0; height:0; position:absolute; }
-    .slider { position:absolute; inset:0; border-radius:31px; background:#d1d1d6; transition:.2s; }
-    .slider:before { content:""; position:absolute; width:27px;height:27px;left:2px;top:2px;background:#fff;border-radius:50%; box-shadow:0 1px 3px #0003; transition:.2s; }
-    .switch input:checked + .slider { background:#34c759; }
-    .switch input:checked + .slider:before { transform:translateX(20px); }
-    .settings-info { padding:13px 14px; color:var(--muted); font-size:12px; line-height:1.5; }
     @media(max-width:390px) {
       body { padding-left:9px; padding-right:9px; }
       h1 { font-size:28px; }
@@ -99,10 +74,7 @@
 <main class="app" id="app">
   <header>
     <h1>Service Costs</h1>
-    <div class="header-actions">
-      <button class="settings-button" id="settings" type="button" aria-label="Settings">⚙︎</button>
-      <button class="add" id="add" aria-label="Add service">+</button>
-    </div>
+    <button class="add" id="add" aria-label="Add service">+</button>
   </header>
 
   <section class="card" aria-label="Service list">
@@ -125,23 +97,6 @@
   <div class="status" id="status" aria-live="polite"></div>
 </main>
 
-
-<div id="settingsView" hidden>
-  <div class="settings-page">
-    <div class="settings-nav"><button class="back-button" id="backToServices" type="button">‹ Services</button><h2 class="settings-title">Settings</h2></div>
-    <section class="settings-section"><h3 class="settings-section-title">Notifications</h3>
-      <div class="settings-card"><div class="setting-row"><div class="setting-main"><div class="setting-name">End-date reminders</div><div class="setting-detail" id="notificationDetail">One day before a service ends</div></div>
-      <label class="switch" aria-label="End-date reminders"><input type="checkbox" id="notificationsToggle"><span class="slider"></span></label></div></div>
-      <div class="settings-info">This controls browser notification permission. Reliable background reminders on iPhone will use Web Push in the production notification service.</div>
-    </section>
-    <section class="settings-section"><h3 class="settings-section-title">Data</h3><div class="settings-card">
-      <div class="setting-row"><div class="setting-main"><div class="setting-name">Export XML</div><div class="setting-detail">Create a portable backup of all services</div></div><button class="setting-action" id="settingsExport" type="button">Export</button></div>
-      <div class="setting-row"><div class="setting-main"><div class="setting-name">Import XML</div><div class="setting-detail">Restore from an XML backup</div></div><button class="setting-action" id="settingsImport" type="button">Import</button></div>
-      <div class="setting-row"><div class="setting-main"><div class="setting-name">Delete all services</div><div class="setting-detail">Remove all locally stored data</div></div><button class="setting-action danger" id="clearData" type="button">Delete</button></div>
-    </div></section>
-    <section class="settings-section"><h3 class="settings-section-title">About</h3><div class="settings-card"><div class="setting-row"><div class="setting-main"><div class="setting-name">Service Costs</div><div class="setting-detail">Version 1.1 · XML data · PWA</div></div></div></div></section>
-  </div>
-</div>
 <div id="modal"></div>
 
 <script>
@@ -235,20 +190,6 @@
     try { services = parseXML(xml); } catch { services = []; }
   }
 
-
-  function openSettings() { $("app").hidden=true; $("settingsView").hidden=false; updateNotificationUI(); }
-  function closeSettings() { $("settingsView").hidden=true; $("app").hidden=false; }
-  function updateNotificationUI() {
-    const t=$("notificationsToggle"), d=$("notificationDetail");
-    if (!("Notification" in window)) { t.checked=false; t.disabled=true; d.textContent="Notifications are not supported by this browser."; return; }
-    t.disabled=false; t.checked=Notification.permission==="granted";
-    d.textContent=Notification.permission==="granted"?"Browser notifications are enabled":Notification.permission==="denied"?"Notifications are blocked in browser settings":"One day before a service ends";
-  }
-  async function toggleNotifications() {
-    if (!("Notification" in window)) return; const t=$("notificationsToggle");
-    if (!t.checked) { t.checked=Notification.permission==="granted"; $("notificationDetail").textContent="To disable notifications, use iOS/browser site settings."; return; }
-    try { const p=await Notification.requestPermission(); updateNotificationUI(); status.textContent=p==="granted"?"Notifications enabled.":"Notification permission was not granted."; } catch { updateNotificationUI(); }
-  }
   function openEditor(index = -1) {
     editingIndex = index;
     const item = index < 0 ? {service:"",cost:"",frequency:"M",endDate:""} : services[index];
@@ -338,7 +279,7 @@
 
   function exportXML() {
     saveXML();
-    const xml = localStorage.getItem(STORAGE_KEY) || "<?xml version=\\"1.0\\"?><services/>";
+    const xml = localStorage.getItem(STORAGE_KEY) || "<?xml version=\"1.0\"?><services/>";
     const blob = new Blob([xml], {type:"application/xml"});
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -364,16 +305,6 @@
 
   $("export").onclick = exportXML;
   $("add").onclick = () => openEditor();
-  $("settings").onclick = openSettings;
-  $("backToServices").onclick = closeSettings;
-  $("notificationsToggle").addEventListener("change", toggleNotifications);
-  $("settingsExport").onclick = exportXML;
-  $("settingsImport").onclick = () => $("file").click();
-  $("clearData").onclick = () => {
-    if (!services.length) { status.textContent="There is no service data to delete."; return; }
-    if (!confirm("Delete all services? This cannot be undone unless you have an XML backup.")) return;
-    services=[]; localStorage.removeItem(STORAGE_KEY); render(); closeSettings(); status.textContent="All services deleted.";
-  };
 
   function scheduleReminderCheck() {
     // Browser-only fallback. A production Web Push endpoint should perform the

@@ -1,0 +1,9 @@
+{
+  "name": "Service Costs",
+  "short_name": "Service Costs",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f2f2f7",
+  "theme_color": "#007aff",
+  "description": "Track recurring service costs and end dates."
+}
