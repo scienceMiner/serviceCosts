@@ -238,9 +238,9 @@
   }
 
   function saveXML() {
-    const xml = `<?xml version="1.0" encoding="UTF-8"?>\\n<services>\\n${
-      services.map(s => `  <service>\\n    <name>${xmlEsc(s.service)}</name>\\n    <cost>${s.cost.toFixed(2)}</cost>\\n    <frequency>${s.frequency}</frequency>\\n    <endDate>${s.endDate}</endDate>\\n  </service>`).join("\\n")
-    }\\n</services>\\n`;
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<services>\n${
+      services.map(s => `  <service>\n    <name>${xmlEsc(s.service)}</name>\n    <cost>${s.cost.toFixed(2)}</cost>\n    <frequency>${s.frequency}</frequency>\n    <endDate>${s.endDate}</endDate>\n  </service>`).join("\n")
+    }\n</services>\n`;
     localStorage.setItem(STORAGE_KEY, xml);
   }
 
