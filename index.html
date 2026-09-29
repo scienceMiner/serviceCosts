@@ -200,7 +200,7 @@
 
         button.addEventListener("click", e => {
           if (suppressClick) { suppressClick = false; e.preventDefault(); return; }
-          if (row.classList.contains("swiped")) { row.classList.remove("swiped"); return; }
+          if (button.classList.contains("swiped")) { button.classList.remove("swiped"); return; }
           openEditor(Number(row.dataset.index));
         });
         del.addEventListener("click", () => deleteRow(Number(row.dataset.index)));
@@ -224,7 +224,7 @@
           const dx = e.clientX - startX;
           button.style.transition = "";
           button.style.transform = "";
-          row.classList.toggle("swiped", dx < -40);
+          button.classList.toggle("swiped", dx < -40);
           suppressClick = true;
         });
         button.addEventListener("pointercancel", () => {
