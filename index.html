@@ -23,13 +23,19 @@
     .app { max-width:760px; margin:0 auto; }
     header { display:flex; align-items:center; justify-content:space-between; padding:12px 2px 18px; }
     h1 { margin:0; font-size:32px; letter-spacing:-.8px; }
+    .header-actions { display:flex; gap:8px; align-items:center; }
+    .gear { width:44px;height:44px;border:0;border-radius:50%;background:#e5e5ea;color:var(--text);font-size:23px;line-height:42px; }
     .add { width:44px;height:44px;border:0;border-radius:50%;background:var(--blue);color:#fff;
       font-size:30px;line-height:42px;box-shadow:0 3px 9px #007aff30; }
     .card { background:var(--card); border-radius:16px; overflow:hidden; box-shadow:0 1px 2px #00000008; }
     .grid { display:grid; grid-template-columns:minmax(0,1.55fr) .72fr .72fr .9fr; gap:7px; align-items:center; }
     .heading { min-height:42px; padding:0 12px; background:#f8f8fa; border-bottom:1px solid var(--line);
       color:var(--muted); font-size:11px; font-weight:700; letter-spacing:.3px; text-transform:uppercase; }
-    .row { min-height:58px; padding:0 12px; border-bottom:1px solid var(--line); cursor:pointer; }
+    .swipe-row { position:relative; overflow:hidden; border-bottom:1px solid var(--line); }
+    .swipe-row:last-child { border-bottom:0; }
+    .row { position:relative; z-index:2; min-height:58px; padding:0 12px; border:0; width:100%; cursor:pointer; background:#fff; transition:transform .22s ease; text-align:left; }
+    .swipe-delete { position:absolute; z-index:1; right:0; top:0; bottom:0; width:82px; border:0; background:var(--danger); color:#fff; font-size:23px; }
+    .row.swiped { transform:translateX(-82px); }
     .row:last-child { border-bottom:0; }
     .cell { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     .service { font-weight:600; }
@@ -61,6 +67,18 @@
     .delete { background:#fff0ef; color:var(--danger); }
     .error { min-height:18px; margin-top:8px; color:#b00020; font-size:13px; }
     .note { margin-top:14px; padding:12px 14px; border-radius:12px; background:#f2f2f7; color:var(--muted); font-size:12px; line-height:1.45; }
+    .settings-page { position:fixed; inset:0; z-index:30; background:var(--bg); overflow:auto; padding:max(12px,env(safe-area-inset-top)) 14px max(24px,env(safe-area-inset-bottom)); }
+    .settings-header { max-width:760px; margin:0 auto; display:grid; grid-template-columns:44px 1fr 44px; align-items:center; padding:12px 0 24px; }
+    .settings-header h2 { margin:0; text-align:center; font-size:22px; }
+    .back { width:44px;height:44px;border:0;background:transparent;color:var(--blue);font-size:38px;line-height:38px;text-align:left; }
+    .settings-group { max-width:760px; margin:0 auto 24px; }
+    .settings-title { margin:0 14px 7px; color:var(--muted); font-size:12px; font-weight:700; }
+    .settings-item { width:100%; min-height:52px; border:0; border-bottom:1px solid var(--line); background:#fff; padding:0 16px; text-align:left; font-size:16px; display:flex; justify-content:space-between; align-items:center; }
+    .settings-item:first-of-type { border-radius:14px 14px 0 0; }
+    .settings-item:last-of-type { border-radius:0 0 14px 14px; border-bottom:0; }
+    .settings-item span { color:#aaa; font-size:26px; }
+    .danger-text { color:var(--danger); }
+    .settings-note { background:#fff; border-radius:14px; padding:14px 16px; color:var(--muted); font-size:13px; line-height:1.45; }
     @media(max-width:390px) {
       body { padding-left:9px; padding-right:9px; }
       h1 { font-size:28px; }
@@ -74,7 +92,10 @@
 <main class="app" id="app">
   <header>
     <h1>Service Costs</h1>
-    <button class="add" id="add" aria-label="Add service">+</button>
+    <div class="header-actions">
+      <button class="gear" id="settings" aria-label="Settings">⚙︎</button>
+      <button class="add" id="add" aria-label="Add service">+</button>
+    </div>
   </header>
 
   <section class="card" aria-label="Service list">
@@ -89,11 +110,6 @@
     <span class="total-value" id="total">£0.00</span>
   </section>
 
-  <div class="toolbar">
-    <button id="export">Export XML</button>
-    <button id="import">Import XML</button>
-    <input id="file" type="file" accept=".xml,text/xml,application/xml" hidden>
-  </div>
   <div class="status" id="status" aria-live="polite"></div>
 </main>
 
@@ -127,14 +143,7 @@
   }
 
   function validDate(value) {
-    // HTML date inputs return an ISO calendar date (YYYY-MM-DD).
-    // Validate both the format and that the date actually exists.
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
-    const [year, month, day] = value.split("-").map(Number);
-    const date = new Date(Date.UTC(year, month - 1, day));
-    return date.getUTCFullYear() === year &&
-           date.getUTCMonth() === month - 1 &&
-           date.getUTCDate() === day;
+    return /^\d{4}-\d{2}-\d{2}$/.test(value);
   }
 
   function monthlyCost() {
@@ -148,15 +157,25 @@
       list.innerHTML = '<div class="empty"><b>No services yet</b>Tap + to add your first service.</div>';
     } else {
       list.innerHTML = services.map((item, i) => `
-        <button class="grid row" data-index="${i}" aria-label="Edit ${esc(item.service)}">
-          <span class="cell service">${esc(item.service)}</span>
-          <span class="cell cost">${money(item.cost)}</span>
-          <span class="cell frequency">${item.frequency}</span>
-          <span class="cell date">${formatDate(item.endDate)}</span>
-        </button>
+        <div class="swipe-row" data-index="${i}">
+          <button class="swipe-delete" type="button" aria-label="Delete ${esc(item.service)}">🗑</button>
+          <button class="grid row" type="button" aria-label="Edit ${esc(item.service)}">
+            <span class="cell service">${esc(item.service)}</span>
+            <span class="cell cost">${money(item.cost)}</span>
+            <span class="cell frequency">${item.frequency}</span>
+            <span class="cell date">${formatDate(item.endDate)}</span>
+          </button>
+        </div>
       `).join("");
-      list.querySelectorAll(".row").forEach(button => {
-        button.addEventListener("click", () => openEditor(Number(button.dataset.index)));
+      list.querySelectorAll(".swipe-row").forEach(row => {
+        const button = row.querySelector(".row");
+        const del = row.querySelector(".swipe-delete");
+        let startX = 0, startY = 0, swiping = false;
+        button.addEventListener("click", () => { if (!row.classList.contains("swiped")) openEditor(Number(row.dataset.index)); else row.classList.remove("swiped"); });
+        del.addEventListener("click", () => deleteRow(Number(row.dataset.index)));
+        button.addEventListener("touchstart", e => { const t=e.changedTouches[0]; startX=t.clientX; startY=t.clientY; swiping=false; }, {passive:true});
+        button.addEventListener("touchmove", e => { const t=e.changedTouches[0]; const dx=t.clientX-startX, dy=t.clientY-startY; if (Math.abs(dx)>12 && Math.abs(dx)>Math.abs(dy)) { swiping=true; e.preventDefault(); button.style.transition="none"; button.style.transform=`translateX(${Math.max(-82,Math.min(0,dx))}px)`; } }, {passive:false});
+        button.addEventListener("touchend", e => { if (!swiping) return; const t=e.changedTouches[0]; const dx=t.clientX-startX; button.style.transition=""; button.style.transform=""; row.classList.toggle("swiped", dx < -40); });
       });
     }
     total.textContent = money(monthlyCost());
@@ -194,7 +213,7 @@
   function load() {
     const xml = localStorage.getItem(STORAGE_KEY);
     if (!xml) return;
-    try { services = parseXML(xml); } catch { services = []; }
+    try { services = parseXML(xml); } catch { services = []; localStorage.removeItem(STORAGE_KEY); }
   }
 
   function openEditor(index = -1) {
@@ -274,6 +293,15 @@
     scheduleReminderCheck();
   }
 
+  function deleteRow(index) {
+    if (!Number.isInteger(index) || !services[index]) return;
+    if (!confirm(`Delete "${services[index].service}"?`)) return;
+    services.splice(index, 1);
+    saveXML();
+    render();
+    status.textContent = "Deleted.";
+  }
+
   function deleteService() {
     if (editingIndex < 0) return;
     if (!confirm(`Delete "${services[editingIndex].service}"?`)) return;
@@ -312,6 +340,13 @@
 
   $("export").onclick = exportXML;
   $("add").onclick = () => openEditor();
+  $("settings").onclick = () => { $("settingsView").hidden = false; };
+  $("closeSettings").onclick = () => { $("settingsView").hidden = true; };
+  $("clearData").onclick = () => {
+    if (!services.length) return;
+    if (!confirm("Delete all services? This cannot be undone.")) return;
+    services = []; saveXML(); render(); status.textContent = "All services deleted.";
+  };
 
   function scheduleReminderCheck() {
     // Browser-only fallback. A production Web Push endpoint should perform the
